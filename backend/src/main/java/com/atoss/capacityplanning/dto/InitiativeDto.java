@@ -1,13 +1,16 @@
 package com.atoss.capacityplanning.dto;
 
 import com.atoss.capacityplanning.entity.InitiativeStatus;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
 
 public record InitiativeDto(
     Long id,
-    String name,
+    @NotBlank String name,
     String description,
-    double estimatedStoryPoints,
+    @PositiveOrZero int estimatedStoryPoints,
     LocalDate targetDate,
-    InitiativeStatus status,
+    @NotNull InitiativeStatus status,
     Integer priority) {}

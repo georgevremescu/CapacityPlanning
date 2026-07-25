@@ -37,7 +37,7 @@ public class InitiativeService {
     List<Epic> epics = epicRepository.findByInitiativeId(id);
 
     List<EpicDto> epicDtos = epics.stream().map(EpicService::toDto).toList();
-    double rolledUp = epics.stream().mapToDouble(Epic::getStoryPoints).sum();
+    int rolledUp = epics.stream().mapToInt(Epic::getStoryPoints).sum();
 
     // Teams involved are derived from the teams of the child epics, de-duplicated.
     Map<Long, TeamDto> teamsById = new LinkedHashMap<>();
@@ -66,7 +66,13 @@ public class InitiativeService {
   }
 
   public void delete(Long id) {
-    initiativeRepository.delete(getInitiativeOrThrow(id));
+    Initiative initiative = getInitiativeOrThrow(id);
+    // Epics aren't deleted with their initiative - they become standalone, matching
+    // the "unlinked" behavior the UI promises when confirming this action.
+    List<Epic> epics = epicRepository.findByInitiativeId(id);
+    epics.forEach(epic -> epic.setInitiative(null));
+    epicRepository.saveAll(epics);
+    initiativeRepository.delete(initiative);
   }
 
   private void applyRequest(Initiative initiative, InitiativeDto request) {

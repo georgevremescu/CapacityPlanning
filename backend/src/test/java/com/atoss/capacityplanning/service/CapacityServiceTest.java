@@ -45,7 +45,7 @@ class CapacityServiceTest {
     return new Person("Person", team, availabilityFte, velocity);
   }
 
-  private static Epic epic(Team team, double storyPoints, LocalDate dueDate, EpicStatus status) {
+  private static Epic epic(Team team, int storyPoints, LocalDate dueDate, EpicStatus status) {
     Epic epic = new Epic();
     epic.setName("Epic");
     epic.setTeam(team);

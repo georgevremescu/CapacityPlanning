@@ -7,5 +7,5 @@ import java.util.List;
 public record InitiativeDetailDto(
     InitiativeDto initiative,
     List<EpicDto> epics,
-    double rolledUpEpicStoryPoints,
+    int rolledUpEpicStoryPoints,
     List<TeamDto> teamsInvolved) {}

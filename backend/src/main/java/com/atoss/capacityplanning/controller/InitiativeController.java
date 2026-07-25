@@ -3,6 +3,7 @@ package com.atoss.capacityplanning.controller;
 import com.atoss.capacityplanning.dto.InitiativeDetailDto;
 import com.atoss.capacityplanning.dto.InitiativeDto;
 import com.atoss.capacityplanning.service.InitiativeService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,12 +38,12 @@ public class InitiativeController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public InitiativeDto create(@RequestBody InitiativeDto request) {
+  public InitiativeDto create(@Valid @RequestBody InitiativeDto request) {
     return initiativeService.create(request);
   }
 
   @PutMapping("/{id}")
-  public InitiativeDto update(@PathVariable Long id, @RequestBody InitiativeDto request) {
+  public InitiativeDto update(@PathVariable Long id, @Valid @RequestBody InitiativeDto request) {
     return initiativeService.update(id, request);
   }
 

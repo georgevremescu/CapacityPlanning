@@ -4,6 +4,7 @@ import com.atoss.capacityplanning.dto.CapacityOverviewDto;
 import com.atoss.capacityplanning.dto.TeamCapacityDto;
 import com.atoss.capacityplanning.service.CapacityMode;
 import com.atoss.capacityplanning.service.CapacityService;
+import java.util.Locale;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,7 +36,7 @@ public class CapacityController {
   }
 
   private CapacityMode parseMode(String mode) {
-    return switch (mode.toLowerCase()) {
+    return switch (mode.toLowerCase(Locale.ROOT)) {
       case "committed" -> CapacityMode.COMMITTED;
       case "simulated" -> CapacityMode.SIMULATED;
       default ->

@@ -1,4 +1,13 @@
 package com.atoss.capacityplanning.dto;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+
 public record PersonDto(
-    Long id, String name, Long teamId, double availabilityFte, double velocity) {}
+    Long id,
+    @NotBlank String name,
+    Long teamId,
+    @DecimalMin("0.0") @DecimalMax("1.0") double availabilityFte,
+    @PositiveOrZero double velocity) {}

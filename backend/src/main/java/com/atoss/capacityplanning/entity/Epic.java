@@ -36,7 +36,7 @@ public class Epic {
   private Team team;
 
   @Column(nullable = false)
-  private double storyPoints;
+  private int storyPoints;
 
   private LocalDate dueDate;
 

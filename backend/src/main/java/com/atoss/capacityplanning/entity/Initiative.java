@@ -29,7 +29,7 @@ public class Initiative {
 
   // Top-down estimate at initiative level.
   @Column(nullable = false)
-  private double estimatedStoryPoints;
+  private int estimatedStoryPoints;
 
   private LocalDate targetDate;
 

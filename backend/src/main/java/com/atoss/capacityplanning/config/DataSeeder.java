@@ -129,7 +129,7 @@ public class DataSeeder implements CommandLineRunner {
   private static Initiative initiative(
       String name,
       String description,
-      double estimatedStoryPoints,
+      int estimatedStoryPoints,
       LocalDate targetDate,
       InitiativeStatus status,
       int priority) {
@@ -147,7 +147,7 @@ public class DataSeeder implements CommandLineRunner {
       String name,
       Initiative initiative,
       Team team,
-      double storyPoints,
+      int storyPoints,
       LocalDate dueDate,
       EpicStatus status) {
     Epic epic = new Epic();

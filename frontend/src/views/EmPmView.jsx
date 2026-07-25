@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { capacityApi, initiativesApi } from '../api/index.js';
 import { useAsync } from '../utils/useAsync.js';
 import UtilizationBar from '../components/UtilizationBar.jsx';
+import CrudForm from '../components/CrudForm.jsx';
 
 const STATUSES = ['PROPOSED', 'COMMITTED', 'CANCELLED'];
 
@@ -14,70 +15,26 @@ const EMPTY_FORM = {
   priority: '',
 };
 
-function InitiativeForm({ initial, onSubmit, onCancel }) {
-  const [form, setForm] = useState(initial ?? EMPTY_FORM);
-
-  const update = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({
-      ...form,
-      estimatedStoryPoints: Number(form.estimatedStoryPoints),
-      priority: form.priority === '' ? null : Number(form.priority),
-      targetDate: form.targetDate || null,
-    });
-  };
-
-  return (
-    <form className="form" onSubmit={handleSubmit}>
-      <label>
-        Name
-        <input value={form.name} onChange={update('name')} required />
-      </label>
-      <label>
-        Description
-        <textarea value={form.description} onChange={update('description')} rows={2} />
-      </label>
-      <label>
-        Estimated Story Points
-        <input
-          type="number"
-          min="0"
-          step="1"
-          value={form.estimatedStoryPoints}
-          onChange={update('estimatedStoryPoints')}
-          required
-        />
-      </label>
-      <label>
-        Target Date
-        <input type="date" value={form.targetDate ?? ''} onChange={update('targetDate')} />
-      </label>
-      <label>
-        Status
-        <select value={form.status} onChange={update('status')}>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Priority (for trade-off ranking)
-        <input type="number" value={form.priority ?? ''} onChange={update('priority')} />
-      </label>
-      <div className="form-actions">
-        <button type="submit">Save</button>
-        <button type="button" className="button-secondary" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-}
+const INITIATIVE_FIELDS = [
+  { name: 'name', label: 'Name', type: 'text', required: true },
+  { name: 'description', label: 'Description', type: 'textarea', rows: 2 },
+  {
+    name: 'estimatedStoryPoints',
+    label: 'Estimated Story Points',
+    type: 'number',
+    min: 0,
+    step: 1,
+    required: true,
+  },
+  { name: 'targetDate', label: 'Target Date', type: 'date' },
+  {
+    name: 'status',
+    label: 'Status',
+    type: 'select',
+    options: STATUSES.map((s) => ({ value: s, label: s })),
+  },
+  { name: 'priority', label: 'Priority (for trade-off ranking)', type: 'number', nullable: true },
+];
 
 function InitiativeDetail({ initiativeId, quarter, mode, onClose }) {
   const { data, error, loading } = useAsync(async () => {
@@ -185,23 +142,39 @@ export default function EmPmView({ quarter, mode }) {
   const [editingId, setEditingId] = useState(null);
   const [creating, setCreating] = useState(false);
   const [detailId, setDetailId] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
   const handleCreate = async (payload) => {
-    await initiativesApi.create(payload);
-    setCreating(false);
-    reload();
+    try {
+      await initiativesApi.create(payload);
+      setActionError(null);
+      setCreating(false);
+      reload();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   const handleUpdate = async (id, payload) => {
-    await initiativesApi.update(id, { ...payload, id });
-    setEditingId(null);
-    reload();
+    try {
+      await initiativesApi.update(id, { ...payload, id });
+      setActionError(null);
+      setEditingId(null);
+      reload();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this initiative? Its epics will remain, unlinked.')) return;
-    await initiativesApi.remove(id);
-    reload();
+    try {
+      await initiativesApi.remove(id);
+      setActionError(null);
+      reload();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   if (loading) return <p className="state-message">Loading initiatives...</p>;
@@ -221,9 +194,16 @@ export default function EmPmView({ quarter, mode }) {
         Ranked by priority for trade-off decisions. Simulation mode ({mode === 'simulated' ? 'including proposed' : 'committed only'}) drives the per-team capacity shown in each initiative's detail.
       </p>
 
+      {actionError && <p className="state-message state-message--error">{actionError}</p>}
+
       {creating && (
         <div className="card">
-          <InitiativeForm onSubmit={handleCreate} onCancel={() => setCreating(false)} />
+          <CrudForm
+            fields={INITIATIVE_FIELDS}
+            initialValues={EMPTY_FORM}
+            onSubmit={handleCreate}
+            onCancel={() => setCreating(false)}
+          />
         </div>
       )}
 
@@ -244,8 +224,9 @@ export default function EmPmView({ quarter, mode }) {
               editingId === initiative.id ? (
                 <tr key={initiative.id}>
                   <td colSpan={6}>
-                    <InitiativeForm
-                      initial={initiative}
+                    <CrudForm
+                      fields={INITIATIVE_FIELDS}
+                      initialValues={initiative}
                       onSubmit={(payload) => handleUpdate(initiative.id, payload)}
                       onCancel={() => setEditingId(null)}
                     />

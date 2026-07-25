@@ -3,6 +3,7 @@ package com.atoss.capacityplanning.controller;
 import com.atoss.capacityplanning.dto.PersonDto;
 import com.atoss.capacityplanning.dto.TeamDto;
 import com.atoss.capacityplanning.service.TeamService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,12 +38,12 @@ public class TeamController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public TeamDto create(@RequestBody TeamDto request) {
+  public TeamDto create(@Valid @RequestBody TeamDto request) {
     return teamService.create(request);
   }
 
   @PutMapping("/{id}")
-  public TeamDto update(@PathVariable Long id, @RequestBody TeamDto request) {
+  public TeamDto update(@PathVariable Long id, @Valid @RequestBody TeamDto request) {
     return teamService.update(id, request);
   }
 
@@ -60,13 +61,15 @@ public class TeamController {
 
   @PostMapping("/{teamId}/people")
   @ResponseStatus(HttpStatus.CREATED)
-  public PersonDto addPerson(@PathVariable Long teamId, @RequestBody PersonDto request) {
+  public PersonDto addPerson(@PathVariable Long teamId, @Valid @RequestBody PersonDto request) {
     return teamService.addPerson(teamId, request);
   }
 
   @PutMapping("/{teamId}/people/{personId}")
   public PersonDto updatePerson(
-      @PathVariable Long teamId, @PathVariable Long personId, @RequestBody PersonDto request) {
+      @PathVariable Long teamId,
+      @PathVariable Long personId,
+      @Valid @RequestBody PersonDto request) {
     return teamService.updatePerson(teamId, personId, request);
   }
 

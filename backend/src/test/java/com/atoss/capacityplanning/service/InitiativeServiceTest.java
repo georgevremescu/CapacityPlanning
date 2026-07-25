@@ -3,6 +3,7 @@ package com.atoss.capacityplanning.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,7 +56,7 @@ class InitiativeServiceTest {
     return team;
   }
 
-  private static Epic epic(long id, Team team, Initiative initiative, double storyPoints) {
+  private static Epic epic(long id, Team team, Initiative initiative, int storyPoints) {
     Epic epic = new Epic();
     epic.setId(id);
     epic.setName("Epic " + id);
@@ -82,7 +83,7 @@ class InitiativeServiceTest {
 
     InitiativeDetailDto detail = initiativeService.findByIdDetailed(1L);
 
-    assertThat(detail.rolledUpEpicStoryPoints()).isEqualTo(75.0);
+    assertThat(detail.rolledUpEpicStoryPoints()).isEqualTo(75);
     assertThat(detail.epics()).hasSize(3);
     assertThat(detail.teamsInvolved()).extracting("id").containsExactlyInAnyOrder(1L, 2L);
   }
@@ -151,9 +152,28 @@ class InitiativeServiceTest {
   void deleteRemovesAnExistingInitiative() {
     Initiative initiative = initiative(1L, "Checkout Redesign", InitiativeStatus.COMMITTED);
     when(initiativeRepository.findById(1L)).thenReturn(Optional.of(initiative));
+    when(epicRepository.findByInitiativeId(1L)).thenReturn(List.of());
 
     initiativeService.delete(1L);
 
+    verify(initiativeRepository).delete(initiative);
+  }
+
+  @Test
+  void deleteUnlinksChildEpicsInsteadOfLeavingADanglingForeignKey() {
+    Initiative initiative = initiative(1L, "Checkout Redesign", InitiativeStatus.COMMITTED);
+    Team platform = team(1L, "Platform");
+    Epic epicA = epic(1L, platform, initiative, 30);
+    Epic epicB = epic(2L, platform, initiative, 20);
+
+    when(initiativeRepository.findById(1L)).thenReturn(Optional.of(initiative));
+    when(epicRepository.findByInitiativeId(1L)).thenReturn(List.of(epicA, epicB));
+
+    initiativeService.delete(1L);
+
+    assertThat(epicA.getInitiative()).isNull();
+    assertThat(epicB.getInitiative()).isNull();
+    verify(epicRepository).saveAll(anyList());
     verify(initiativeRepository).delete(initiative);
   }
 }

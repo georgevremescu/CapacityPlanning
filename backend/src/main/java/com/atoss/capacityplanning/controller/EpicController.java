@@ -2,6 +2,7 @@ package com.atoss.capacityplanning.controller;
 
 import com.atoss.capacityplanning.dto.EpicDto;
 import com.atoss.capacityplanning.service.EpicService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,12 +37,12 @@ public class EpicController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public EpicDto create(@RequestBody EpicDto request) {
+  public EpicDto create(@Valid @RequestBody EpicDto request) {
     return epicService.create(request);
   }
 
   @PutMapping("/{id}")
-  public EpicDto update(@PathVariable Long id, @RequestBody EpicDto request) {
+  public EpicDto update(@PathVariable Long id, @Valid @RequestBody EpicDto request) {
     return epicService.update(id, request);
   }
 

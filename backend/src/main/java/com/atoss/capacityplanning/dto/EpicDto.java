@@ -1,15 +1,18 @@
 package com.atoss.capacityplanning.dto;
 
 import com.atoss.capacityplanning.entity.EpicStatus;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
 
 public record EpicDto(
     Long id,
-    String name,
+    @NotBlank String name,
     Long initiativeId,
     String initiativeName,
-    Long teamId,
+    @NotNull Long teamId,
     String teamName,
-    double storyPoints,
+    @PositiveOrZero int storyPoints,
     LocalDate dueDate,
-    EpicStatus status) {}
+    @NotNull EpicStatus status) {}

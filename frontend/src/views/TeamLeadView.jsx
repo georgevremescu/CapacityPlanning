@@ -3,64 +3,25 @@ import { capacityApi, epicsApi, initiativesApi, teamsApi } from '../api/index.js
 import { useAsync } from '../utils/useAsync.js';
 import { quarterOfDateString } from '../utils/quarter.js';
 import UtilizationBar from '../components/UtilizationBar.jsx';
+import CrudForm from '../components/CrudForm.jsx';
 
 const EPIC_STATUSES = ['PROPOSED', 'COMMITTED', 'IN_PROGRESS', 'DONE', 'CANCELLED'];
 
-function emptyPersonForm() {
-  return { name: '', availabilityFte: 1.0, velocity: 5.0 };
-}
+const EMPTY_PERSON_FORM = { name: '', availabilityFte: 1.0, velocity: 5.0 };
 
-function PersonForm({ initial, onSubmit, onCancel }) {
-  const [form, setForm] = useState(initial ?? emptyPersonForm());
-  const update = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({
-      name: form.name,
-      availabilityFte: Number(form.availabilityFte),
-      velocity: Number(form.velocity),
-    });
-  };
-
-  return (
-    <form className="form form--inline" onSubmit={handleSubmit}>
-      <label>
-        Name
-        <input value={form.name} onChange={update('name')} required />
-      </label>
-      <label>
-        Availability (FTE)
-        <input
-          type="number"
-          min="0"
-          max="1"
-          step="0.1"
-          value={form.availabilityFte}
-          onChange={update('availabilityFte')}
-          required
-        />
-      </label>
-      <label>
-        Velocity (sp/day)
-        <input
-          type="number"
-          min="0"
-          step="0.5"
-          value={form.velocity}
-          onChange={update('velocity')}
-          required
-        />
-      </label>
-      <div className="form-actions">
-        <button type="submit">Save</button>
-        <button type="button" className="button-secondary" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-}
+const PERSON_FIELDS = [
+  { name: 'name', label: 'Name', type: 'text', required: true },
+  {
+    name: 'availabilityFte',
+    label: 'Availability (FTE)',
+    type: 'number',
+    min: 0,
+    max: 1,
+    step: 0.1,
+    required: true,
+  },
+  { name: 'velocity', label: 'Velocity (sp/day)', type: 'number', min: 0, step: 0.5, required: true },
+];
 
 function OverheadEditor({ team, onSave }) {
   const [editing, setEditing] = useState(false);
@@ -102,75 +63,31 @@ function OverheadEditor({ team, onSave }) {
   );
 }
 
-function emptyEpicForm(teamId) {
-  return { name: '', initiativeId: '', teamId, storyPoints: 0, dueDate: '', status: 'PROPOSED' };
-}
+const EMPTY_EPIC_FORM = { name: '', initiativeId: '', storyPoints: 0, dueDate: '', status: 'PROPOSED' };
 
-function EpicForm({ initial, teamId, initiatives, onSubmit, onCancel }) {
-  const [form, setForm] = useState(initial ?? emptyEpicForm(teamId));
-  const update = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({
-      ...form,
-      teamId,
-      initiativeId: form.initiativeId === '' ? null : Number(form.initiativeId),
-      storyPoints: Number(form.storyPoints),
-      dueDate: form.dueDate || null,
-    });
-  };
-
-  return (
-    <form className="form" onSubmit={handleSubmit}>
-      <label>
-        Name
-        <input value={form.name} onChange={update('name')} required />
-      </label>
-      <label>
-        Initiative (optional)
-        <select value={form.initiativeId ?? ''} onChange={update('initiativeId')}>
-          <option value="">None (standalone)</option>
-          {initiatives.map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Story Points
-        <input
-          type="number"
-          min="0"
-          step="1"
-          value={form.storyPoints}
-          onChange={update('storyPoints')}
-          required
-        />
-      </label>
-      <label>
-        Due Date
-        <input type="date" value={form.dueDate ?? ''} onChange={update('dueDate')} />
-      </label>
-      <label>
-        Status
-        <select value={form.status} onChange={update('status')}>
-          {EPIC_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="form-actions">
-        <button type="submit">Save</button>
-        <button type="button" className="button-secondary" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
+// initiativeId's options depend on the currently loaded initiatives list, so
+// this is a function rather than a static constant like the other field sets.
+function epicFields(initiatives) {
+  return [
+    { name: 'name', label: 'Name', type: 'text', required: true },
+    {
+      name: 'initiativeId',
+      label: 'Initiative (optional)',
+      type: 'select',
+      nullable: true,
+      nullableLabel: 'None (standalone)',
+      numeric: true,
+      options: initiatives.map((i) => ({ value: i.id, label: i.name })),
+    },
+    { name: 'storyPoints', label: 'Story Points', type: 'number', min: 0, step: 1, required: true },
+    { name: 'dueDate', label: 'Due Date', type: 'date' },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      options: EPIC_STATUSES.map((s) => ({ value: s, label: s })),
+    },
+  ];
 }
 
 function byDueDate(a, b) {
@@ -221,56 +138,92 @@ export default function TeamLeadView({ quarter, mode }) {
   const [editingPersonId, setEditingPersonId] = useState(null);
   const [addingEpic, setAddingEpic] = useState(false);
   const [editingEpicId, setEditingEpicId] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
   const team = teams?.find((t) => t.id === teamId);
   const teamEpics = (allEpics?.filter((e) => e.teamId === teamId) ?? []).sort(byDueDate);
 
   const handleOverheadSave = async (overheadPercentage) => {
-    await teamsApi.update(teamId, { ...team, overheadPercentage });
-    reloadTeams();
-    reloadCapacity();
+    try {
+      await teamsApi.update(teamId, { ...team, overheadPercentage });
+      setActionError(null);
+      reloadTeams();
+      reloadCapacity();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   const handleAddPerson = async (payload) => {
-    await teamsApi.addPerson(teamId, payload);
-    setAddingPerson(false);
-    reloadPeople();
-    reloadCapacity();
+    try {
+      await teamsApi.addPerson(teamId, payload);
+      setActionError(null);
+      setAddingPerson(false);
+      reloadPeople();
+      reloadCapacity();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   const handleUpdatePerson = async (personId, payload) => {
-    await teamsApi.updatePerson(teamId, personId, payload);
-    setEditingPersonId(null);
-    reloadPeople();
-    reloadCapacity();
+    try {
+      await teamsApi.updatePerson(teamId, personId, payload);
+      setActionError(null);
+      setEditingPersonId(null);
+      reloadPeople();
+      reloadCapacity();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   const handleDeletePerson = async (personId) => {
     if (!confirm('Remove this person from the team?')) return;
-    await teamsApi.removePerson(teamId, personId);
-    reloadPeople();
-    reloadCapacity();
+    try {
+      await teamsApi.removePerson(teamId, personId);
+      setActionError(null);
+      reloadPeople();
+      reloadCapacity();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   const handleCreateEpic = async (payload) => {
-    await epicsApi.create(payload);
-    setAddingEpic(false);
-    reloadEpics();
-    reloadCapacity();
+    try {
+      await epicsApi.create(payload);
+      setActionError(null);
+      setAddingEpic(false);
+      reloadEpics();
+      reloadCapacity();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   const handleUpdateEpic = async (id, payload) => {
-    await epicsApi.update(id, { ...payload, id });
-    setEditingEpicId(null);
-    reloadEpics();
-    reloadCapacity();
+    try {
+      await epicsApi.update(id, { ...payload, id });
+      setActionError(null);
+      setEditingEpicId(null);
+      reloadEpics();
+      reloadCapacity();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   const handleDeleteEpic = async (id) => {
     if (!confirm('Delete this epic?')) return;
-    await epicsApi.remove(id);
-    reloadEpics();
-    reloadCapacity();
+    try {
+      await epicsApi.remove(id);
+      setActionError(null);
+      reloadEpics();
+      reloadCapacity();
+    } catch (err) {
+      setActionError(err.message);
+    }
   };
 
   if (teamsLoading || !teams) return <p className="state-message">Loading teams...</p>;
@@ -291,6 +244,8 @@ export default function TeamLeadView({ quarter, mode }) {
           </select>
         </label>
       </div>
+
+      {actionError && <p className="state-message state-message--error">{actionError}</p>}
 
       <div className="card">
         <h3>
@@ -322,7 +277,13 @@ export default function TeamLeadView({ quarter, mode }) {
           </button>
         </div>
         {addingPerson && (
-          <PersonForm onSubmit={handleAddPerson} onCancel={() => setAddingPerson(false)} />
+          <CrudForm
+            inline
+            fields={PERSON_FIELDS}
+            initialValues={EMPTY_PERSON_FORM}
+            onSubmit={handleAddPerson}
+            onCancel={() => setAddingPerson(false)}
+          />
         )}
         {peopleLoading || !people ? (
           <p className="state-message">Loading roster...</p>
@@ -341,8 +302,10 @@ export default function TeamLeadView({ quarter, mode }) {
                 editingPersonId === person.id ? (
                   <tr key={person.id}>
                     <td colSpan={4}>
-                      <PersonForm
-                        initial={person}
+                      <CrudForm
+                        inline
+                        fields={PERSON_FIELDS}
+                        initialValues={person}
                         onSubmit={(payload) => handleUpdatePerson(person.id, payload)}
                         onCancel={() => setEditingPersonId(null)}
                       />
@@ -380,10 +343,10 @@ export default function TeamLeadView({ quarter, mode }) {
           </button>
         </div>
         {addingEpic && initiatives && (
-          <EpicForm
-            teamId={teamId}
-            initiatives={initiatives}
-            onSubmit={handleCreateEpic}
+          <CrudForm
+            fields={epicFields(initiatives)}
+            initialValues={EMPTY_EPIC_FORM}
+            onSubmit={(payload) => handleCreateEpic({ ...payload, teamId })}
             onCancel={() => setAddingEpic(false)}
           />
         )}
@@ -408,11 +371,10 @@ export default function TeamLeadView({ quarter, mode }) {
                 editingEpicId === epic.id ? (
                   <tr key={epic.id}>
                     <td colSpan={6}>
-                      <EpicForm
-                        initial={epic}
-                        teamId={teamId}
-                        initiatives={initiatives}
-                        onSubmit={(payload) => handleUpdateEpic(epic.id, payload)}
+                      <CrudForm
+                        fields={epicFields(initiatives)}
+                        initialValues={epic}
+                        onSubmit={(payload) => handleUpdateEpic(epic.id, { ...payload, teamId })}
                         onCancel={() => setEditingEpicId(null)}
                       />
                     </td>
