@@ -18,6 +18,22 @@ The tool answers one question in every view: *for team X in quarter Y, how much 
 capacity exists, and how much is actually assigned?* — aggregated and filtered
 differently per audience.
 
+## Development Process
+
+Built end-to-end with AI assistance (Claude Code) from the very first line of code,
+using an ask-plan-execute loop rather than one-shot generation:
+
+1. **Plan** — the stakeholder brief was translated into a concrete implementation plan
+   (data model, API, build phases) before any code was written.
+2. **Execute** — the plan was built out phase by phase (backend, frontend,
+   integration), verified in the browser and via the test suite at each step.
+3. **Iterate** — follow-up sessions used AI for feature changes driven by direct
+   feedback (the persona-based UI redesign, build automation for the stale-bundle bug).
+4. **Review & refine** — a dedicated code-review pass, with the AI acting as a
+   principal-engineer reviewer of its own prior output, ranked findings by severity and
+   fixed them; further one-off fixes (`Locale.ROOT`, story-point typing, the shared
+   `CrudForm`) were requested and applied individually afterward.
+
 ## Architecture
 
 Single-server prototype. Spring Boot (embedded Tomcat) serves both the REST API and
