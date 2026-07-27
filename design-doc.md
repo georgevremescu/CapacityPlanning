@@ -62,22 +62,8 @@ Node/npm, runs `npm install`/`npm run build` in `frontend/`, and a
 assets first. An `m2e` lifecycle-mapping entry tells Eclipse to run this on explicit
 builds but skip it on incremental keystroke builds.
 
-This was **not** part of the original plan — it was added mid-project after a real bug:
-a source edit to `HigherManagementView.jsx` had no visible effect because Eclipse was
-serving a previously-built, now-stale bundle from `static/`, and the user had no way to
-know that without asking. The rejected alternative was a manual `build-frontend.ps1`/
-`.sh` script — lower setup cost (no pom changes, no Node download), but it depends on
-someone remembering to run it, which is exactly the failure mode that caused the bug.
-Binding the build to Maven's lifecycle means any `Run As → Maven build` in Eclipse (or
-plain `mvn package`/`spring-boot:run`) always regenerates the UI from source.
-
 **Lombok** was added to the four JPA entities (`@Getter`/`@Setter`) to remove
 hand-written accessors. Maven/javac handles Lombok's annotation processing natively;
-Eclipse's own compiler (JDT) does not until Lombok's installer is run once against the
-Eclipse install (documented in `README.md`) — otherwise the editor shows false
-"method does not exist" errors on generated accessors even though the command-line
-build is fine. This surfaced for real during the project (an Eclipse-reported test
-failure that was actually this IDE gap, not a code bug).
 
 ## Data Model
 
@@ -99,29 +85,14 @@ failure that was actually this IDE gap, not a code bug).
 People are only ever created, read, updated, or deleted in the context of their team
 (`/api/teams/{id}/people/**`) — there's no standalone person management.
 
-**Note on numeric types:** `storyPoints`/`estimatedStoryPoints` were changed from
-`double` to `int` during the code-review pass, deliberately scoped to *just* those
-fields — they're used everywhere as whole-number counts (seed data, tests, `step="1"`
-inputs), and `double` silently allowed nonsensical values like `3.7`. `velocity`,
-`availabilityFte`, and `overheadPercentage` were **kept** as `double` — they're
-genuinely fractional (seed data has `velocity=5.5`), so converting them would have been
-churn with no benefit. `spring.jackson.deserialization.accept-float-as-int=false` makes
-the API reject a fractional story-point value with a `400` instead of Jackson silently
-truncating it.
-
 ## Entities & Attributes Added Beyond the Original Brief
-
-The brief specified four entities (Initiative, Epic, Team, Person) with minimal
-attributes and left schema/relationships open, on the condition that additions be
-justified. Beyond that starting point:
 
 **Added entity**
 
-- **Quarter** (not persisted, derived from any date) — the brief specifies no planning
-  granularity at all (initiatives "span months to years," Higher Management cares about
-  "annual" commitments). Quarter was chosen as the bucket size for every calculation and
-  view because it sits between an exact due date and a full year and is the conventional
-  cadence for capacity planning; nothing in the brief mandates this specifically.
+- **Quarter** (not persisted, derived from any date) — Quarter was chosen as the bucket
+  size for every calculation and view because it sits between an exact due date and a 
+  full year and is the conventional cadence for capacity planning; nothing in the brief
+  mandates this specifically.
 
 **Added attributes**
 
@@ -133,24 +104,22 @@ justified. Beyond that starting point:
 - **`Initiative.status`** (`PROPOSED`/`COMMITTED`/`CANCELLED`) and **`Epic.status`**
   (`PROPOSED`/`COMMITTED`/`IN_PROGRESS`/`DONE`/`CANCELLED`) — invented as the entire
   mechanism behind "planning simulations before commitments are made" (EM/PM) and
-  "impact of new demands" (Higher Management). The brief names the need for simulation
-  but not how it should be represented in data. The two enums are not cross-validated
+  "impact of new demands" (Higher Management). The two enums are not cross-validated
   against each other, and only `Epic.status` actually feeds the capacity math (see
   Open Questions and Known Limitations).
 - **`Initiative.priority`** (optional) — invented to give EM/PM's "trade-off decisions"
-  something concrete to rank by; again, the brief names the need but not the mechanism.
+  something concrete to rank by.
 - **`Initiative.description`** — plain usability addition (free-text notes); not tied to
   any stated requirement.
 - **Unit choice: story points.** Both Initiative "estimated effort" and Epic "estimate"
-  were interpreted as Scrum-style story points — a unit the brief never names. This
-  choice is what makes `Person.velocity` necessary in the first place; a different unit
-  choice (person-days, t-shirt sizes) would have implied a different Person attribute.
+  were interpreted as Scrum-style story points. This choice is what makes 
+  `Person.velocity` necessary in the first place; a different unit choice (person-days,
+  t-shirt sizes) would have implied a different Person attribute.
 
-**Modeling decision, not a new field:** "teams involved in an initiative" (brief: "may
-involve multiple teams") is *derived* from the teams of its child epics rather than
-stored as a direct relationship, to avoid a duplicate/driftable field. The tradeoff:
-an initiative with no epics yet has no derivable teams — and, per the Assumptions
-below, no capacity impact either.
+**Modeling decision, not a new field:** "teams involved in an initiative" is *derived*
+from the teams of its child epics rather than stored as a direct relationship, to avoid
+a duplicate/driftable field. The tradeoff: an initiative with no epics yet has no
+derivable teams — and, per the Assumptions below, no capacity impact either.
 
 ## Capacity Calculation
 
@@ -198,23 +167,6 @@ Three tabs, one per stakeholder, **not** one per data entity:
 - **Team Workspace** (Team Lead/PO) — scoped to one team via a dropdown: roster CRUD,
   editable overhead %, and full epic CRUD (with an implicit team — no team dropdown in
   the epic form, since it's contextual to whichever team tab is selected).
-
-**This replaced an earlier, entity-based nav** (Executive Overview / Initiatives /
-Epics / Team Capacity, one tab per table) that was the original plan. It was
-restructured once the user supplied the three stakeholder descriptions verbatim mid-
-project: the original tabs mirrored the data model, not who actually needed what, and
-in particular left "Epics" floating as an unowned top-level tab when it more naturally
-belongs to Team Lead/PO. The three final tab labels ("Capacity Outlook", "Planning
-Simulation", "Team Workspace") were chosen from a set of naming options the assistant
-proposed; the user picked one by number ("use option 3") — see Assumptions, below.
-
-**Shared `CrudForm` component** (`frontend/src/components/CrudForm.jsx`) replaced three
-near-identical hand-rolled forms (`InitiativeForm`, `PersonForm`, `EpicForm`) with one
-config-driven component taking a `fields` descriptor array (name/label/type/min/max/
-step/options/nullable/numeric) plus `initialValues`/`onSubmit`/`onCancel`. This was
-**deliberately not done** on the first review pass — three similar forms was judged a
-premature-abstraction risk not worth the complexity of a flexible-enough field schema —
-and was only built once the user directly asked for it as a follow-up.
 
 ## Visual Design Rationale
 
@@ -279,36 +231,12 @@ was UI-only, not enforcement).
 | Single Spring Boot server, embedded Tomcat, serves API + static build | Zero-friction local run; one URL, one process, Eclipse-importable |
 | H2 file DB, no auth | Single implicit local user; not a production concern for this prototype |
 | Simulation via `Epic.status`, not a separate scenario system | Reuses data already modeled; avoids maintaining parallel/branching plan data |
-| Persona-based tabs, not entity-based tabs | Original entity tabs didn't map to who needs what; restructured once explicit stakeholder concerns were given |
-| `frontend-maven-plugin` bound to Maven lifecycle | A manual copy step already caused a real stale-bundle bug; binding to the build makes it impossible to forget |
-| `CrudForm` shared component | Only extracted once a third near-identical form existed — avoided premature abstraction at 2 forms |
-| `storyPoints`/`estimatedStoryPoints`: `double` → `int`, but not `velocity`/`availabilityFte`/`overheadPercentage` | Scoped fix to what's actually a discrete count; the fractional fields are correct as `double` |
-| Lombok for entity accessors | Less boilerplate; costs a one-time Eclipse/JDT installer step (Maven/javac needs nothing extra) |
+| Persona-based tabs, not entity-based tabs | Focused on who needs what |
+| `frontend-maven-plugin` bound to Maven lifecycle | Binding to the build makes it impossible to forget |
+| `CrudForm` shared component | Needed once a third near-identical form existed — avoided premature abstraction at 2 forms |
+| Lombok for entity accessors | Less boilerplate |
 | Bean Validation wired to all write DTOs | Dependency was already present but unused; API had no input enforcement beyond client-side hints |
 | Git repo created only after the prototype worked end-to-end | Original plan explicitly said no git init; the user asked for it later, once satisfied with the app |
-
-## Alternatives Rejected (and why)
-
-- **Blanket `double` → `BigDecimal`/`int` rewrite** across all numeric fields — rejected
-  in favor of a narrow fix (see above). A blanket rewrite would touch the capacity
-  arithmetic, every DTO, every test, and the frontend, for no real benefit in a
-  single-user prototype with no money math and no fractional story points in practice.
-- **Generic `<CrudForm>` before a third form existed** — rejected initially as premature
-  abstraction (real complexity — a flexible field schema covering text/number/date/
-  select, per-field coercion, conditional dropdown options — traded for saving ~100
-  lines total); built only once actually requested.
-- **Manual `build-frontend.ps1`/`.sh` script** instead of `frontend-maven-plugin` —
-  rejected because it's not automatic; the whole problem was someone forgetting to run
-  a manual step.
-- **Named/persisted simulation scenarios** with side-by-side comparison — rejected for
-  scope; the single global committed/proposed toggle was judged sufficient for this
-  prototype. Left as an open TODO.
-- **Cross-team or partial person allocation** — rejected; a person belongs to exactly
-  one team, kept simple.
-- **A real regional/holiday working-day calendar** — rejected; a hardcoded 62
-  working-days-per-quarter constant is used for every team and quarter.
-- **Historical-throughput-derived velocity** — rejected; `velocity` is a manually
-  entered, static self/manager estimate.
 
 ## Known Limitations / TODOs (still open, deliberate)
 
@@ -350,17 +278,6 @@ was UI-only, not enforcement).
 
 ## Assumptions Made (requirements were ambiguous or unrecoverable)
 
-- **Persona tab names.** The transcript shows the assistant proposing named options and
-  the user replying "use option 3" — the actual list of alternatives wasn't preserved in
-  the flattened text/assistant-text extraction (it was very likely presented via a
-  structured question widget, whose content isn't a plain assistant `text` block). Only
-  the final chosen names (Capacity Outlook / Planning Simulation / Team Workspace) are
-  documented here as the settled decision; no claim is made about what the rejected
-  options were.
-- **Problem statement framing.** Treated the three stakeholder paragraphs the user
-  pasted verbatim (Higher Management / EM+PM / Team Leads-POs) as the closest thing to a
-  formal requirements source across all three sessions, since no separate requirements
-  document exists in the repo.
 - **"Support load" was folded into "overhead."** The brief names three distinct
   Team Lead/PO capacity factors — individual availability, overhead, and support
   load — but only two became first-class fields (`Person.availabilityFte`,
