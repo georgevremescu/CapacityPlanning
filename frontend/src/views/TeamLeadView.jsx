@@ -25,13 +25,24 @@ const PERSON_FIELDS = [
 
 function OverheadEditor({ team, onSave }) {
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(team.overheadPercentage);
+  const [meetingValue, setMeetingValue] = useState(team.meetingOverheadPercentage);
+  const [supportLoadValue, setSupportLoadValue] = useState(team.supportLoadOverheadPercentage);
+
+  const total = team.meetingOverheadPercentage + team.supportLoadOverheadPercentage;
 
   if (!editing) {
     return (
       <span>
-        {(team.overheadPercentage * 100).toFixed(0)}%{' '}
-        <button className="link-button" onClick={() => setEditing(true)}>
+        {(total * 100).toFixed(0)}% ({(team.meetingOverheadPercentage * 100).toFixed(0)}% meetings +{' '}
+        {(team.supportLoadOverheadPercentage * 100).toFixed(0)}% support){' '}
+        <button
+          className="link-button"
+          onClick={() => {
+            setMeetingValue(team.meetingOverheadPercentage);
+            setSupportLoadValue(team.supportLoadOverheadPercentage);
+            setEditing(true);
+          }}
+        >
           edit
         </button>
       </span>
@@ -40,17 +51,31 @@ function OverheadEditor({ team, onSave }) {
 
   return (
     <span className="inline-edit">
-      <input
-        type="number"
-        min="0"
-        max="1"
-        step="0.01"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
+      <label>
+        Meetings{' '}
+        <input
+          type="number"
+          min="0"
+          max="1"
+          step="0.01"
+          value={meetingValue}
+          onChange={(e) => setMeetingValue(e.target.value)}
+        />
+      </label>
+      <label>
+        Support load{' '}
+        <input
+          type="number"
+          min="0"
+          max="1"
+          step="0.01"
+          value={supportLoadValue}
+          onChange={(e) => setSupportLoadValue(e.target.value)}
+        />
+      </label>
       <button
         onClick={async () => {
-          await onSave(Number(value));
+          await onSave(Number(meetingValue), Number(supportLoadValue));
           setEditing(false);
         }}
       >
@@ -143,9 +168,13 @@ export default function TeamLeadView({ quarter, mode }) {
   const team = teams?.find((t) => t.id === teamId);
   const teamEpics = (allEpics?.filter((e) => e.teamId === teamId) ?? []).sort(byDueDate);
 
-  const handleOverheadSave = async (overheadPercentage) => {
+  const handleOverheadSave = async (meetingOverheadPercentage, supportLoadOverheadPercentage) => {
     try {
-      await teamsApi.update(teamId, { ...team, overheadPercentage });
+      await teamsApi.update(teamId, {
+        ...team,
+        meetingOverheadPercentage,
+        supportLoadOverheadPercentage,
+      });
       setActionError(null);
       reloadTeams();
       reloadCapacity();

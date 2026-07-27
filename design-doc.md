@@ -67,8 +67,9 @@ hand-written accessors. Maven/javac handles Lombok's annotation processing nativ
 
 ## Data Model
 
-- **Team** — `name`, `overheadPercentage` (fraction of capacity lost to
-  meetings/support/admin, a single blended number).
+- **Team** — `name`, `meetingOverheadPercentage` (fraction of capacity lost to recurring
+  meetings/admin) and `supportLoadOverheadPercentage` (fraction lost to ad-hoc
+  support/interrupt work), each entered independently and summed for the capacity math.
 - **Person** — belongs to exactly one team; `availabilityFte` (0.0–1.0) and `velocity`
   (story points/working day, `double` — a genuinely fractional rate), both constant
   over time.
@@ -128,7 +129,7 @@ For a given team and quarter (`CapacityService.calculate`):
 ```
 workingDaysInQuarter = 62                                    (constant, no holiday calendar)
 teamRawCapacitySp     = Σ (person.availabilityFte * person.velocity * workingDaysInQuarter)
-teamNetCapacitySp     = teamRawCapacitySp * (1 - team.overheadPercentage)
+teamNetCapacitySp     = teamRawCapacitySp * (1 - (team.meetingOverheadPercentage + team.supportLoadOverheadPercentage))
 teamAllocatedSp       = Σ epic.storyPoints, for epics on that team whose dueDate falls in the quarter,
                         filtered by status (see Simulation Toggle below)
 utilization           = teamAllocatedSp / teamNetCapacitySp   (0 if netCapacitySp is 0)
@@ -217,9 +218,11 @@ is wired to all four DTOs via `@Valid` on the controllers, with
 `MethodArgumentNotValidException` mapped to a `400` with a joined field-error message.
 This closes a real gap: `spring-boot-starter-validation` was a declared dependency with
 zero annotations anywhere until the code-review pass — nothing had stopped
-`overheadPercentage > 1`, negative `storyPoints`/`velocity`, or blank names from being
-persisted via a direct API call (the frontend's `min`/`max` on `<input type="number">`
-was UI-only, not enforcement).
+`meetingOverheadPercentage`/`supportLoadOverheadPercentage > 1` individually, negative
+`storyPoints`/`velocity`, or blank names from being persisted via a direct API call (the
+frontend's `min`/`max` on `<input type="number">` was UI-only, not enforcement).
+`TeamService` additionally rejects the two overhead fields summing above `1.0`, since
+Bean Validation can only constrain each field independently.
 
 `DataIntegrityViolationException` (an FK constraint violation) is mapped globally to a
 `409 Conflict`, as a safety net for any delete that still has dependent rows.
@@ -245,7 +248,6 @@ was UI-only, not enforcement).
 - `availabilityFte`/`velocity` are constant over time — no leave/ramp modeling, no
   throughput-derived velocity.
 - A person belongs to exactly one team — no cross-team or partial allocation.
-- `overheadPercentage` is one blended number, not split by cause.
 - No formal prioritization algorithm — `Initiative.priority` is just a sortable field.
 - No persisted, named simulation scenarios — a single global committed/proposed toggle.
 - No pagination, search, sorting, or bulk operations on any endpoint.
@@ -278,13 +280,6 @@ was UI-only, not enforcement).
 
 ## Assumptions Made (requirements were ambiguous or unrecoverable)
 
-- **"Support load" was folded into "overhead."** The brief names three distinct
-  Team Lead/PO capacity factors — individual availability, overhead, and support
-  load — but only two became first-class fields (`Person.availabilityFte`,
-  `Team.overheadPercentage`). Support load was assumed to live inside the single
-  blended `overheadPercentage` number rather than get its own field, a shortcut the
-  code itself flags with `TODO: split into meeting overhead vs support-load overhead
-  later`.
 - **Quarter as the planning bucket.** The brief specifies no time granularity; quarter
   was assumed to be the right bucket size for every calculation and view, with a
   hardcoded 62-working-days-per-quarter constant invented to make the arithmetic work.

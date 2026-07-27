@@ -67,7 +67,7 @@ public class CapacityService {
         people.stream()
             .mapToDouble(p -> p.getAvailabilityFte() * p.getVelocity() * workingDays)
             .sum();
-    double netCapacitySp = rawCapacitySp * (1 - team.getOverheadPercentage());
+    double netCapacitySp = rawCapacitySp * (1 - team.getTotalOverheadPercentage());
 
     Set<EpicStatus> includedStatuses = EnumSet.copyOf(COMMITTED_STATUSES);
     if (mode == CapacityMode.SIMULATED) {

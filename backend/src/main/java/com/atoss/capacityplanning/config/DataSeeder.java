@@ -41,9 +41,9 @@ public class DataSeeder implements CommandLineRunner {
       return;
     }
 
-    Team platform = teamRepository.save(new Team("Platform", 0.20));
-    Team mobile = teamRepository.save(new Team("Mobile", 0.15));
-    Team data = teamRepository.save(new Team("Data", 0.25));
+    Team platform = teamRepository.save(new Team("Platform", 0.12, 0.08));
+    Team mobile = teamRepository.save(new Team("Mobile", 0.10, 0.05));
+    Team data = teamRepository.save(new Team("Data", 0.15, 0.10));
 
     personRepository.save(new Person("Alice Novak", platform, 1.0, 6.0));
     personRepository.save(new Person("Bob Fischer", platform, 0.8, 5.0));

@@ -31,15 +31,26 @@ public class TeamService {
   }
 
   public TeamDto create(TeamDto request) {
-    Team team = new Team(request.name(), request.overheadPercentage());
+    validateOverhead(request);
+    Team team =
+        new Team(request.name(), request.meetingOverheadPercentage(), request.supportLoadOverheadPercentage());
     return toDto(teamRepository.save(team));
   }
 
   public TeamDto update(Long id, TeamDto request) {
+    validateOverhead(request);
     Team team = getTeamOrThrow(id);
     team.setName(request.name());
-    team.setOverheadPercentage(request.overheadPercentage());
+    team.setMeetingOverheadPercentage(request.meetingOverheadPercentage());
+    team.setSupportLoadOverheadPercentage(request.supportLoadOverheadPercentage());
     return toDto(teamRepository.save(team));
+  }
+
+  private void validateOverhead(TeamDto request) {
+    if (request.totalOverheadPercentage() > 1.0) {
+      throw new IllegalArgumentException(
+          "meetingOverheadPercentage + supportLoadOverheadPercentage must not exceed 1.0");
+    }
   }
 
   public void delete(Long id) {
@@ -93,7 +104,11 @@ public class TeamService {
   }
 
   static TeamDto toDto(Team team) {
-    return new TeamDto(team.getId(), team.getName(), team.getOverheadPercentage());
+    return new TeamDto(
+        team.getId(),
+        team.getName(),
+        team.getMeetingOverheadPercentage(),
+        team.getSupportLoadOverheadPercentage());
   }
 
   static PersonDto toDto(Person person) {

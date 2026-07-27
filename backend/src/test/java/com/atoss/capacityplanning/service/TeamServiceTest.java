@@ -35,8 +35,8 @@ class TeamServiceTest {
     teamService = new TeamService(teamRepository, personRepository);
   }
 
-  private static Team team(long id, String name, double overhead) {
-    Team team = new Team(name, overhead);
+  private static Team team(long id, String name, double meetingOverhead, double supportLoadOverhead) {
+    Team team = new Team(name, meetingOverhead, supportLoadOverhead);
     team.setId(id);
     return team;
   }
@@ -49,11 +49,11 @@ class TeamServiceTest {
 
   @Test
   void findAllMapsEntitiesToDtos() {
-    when(teamRepository.findAll()).thenReturn(List.of(team(1L, "Platform", 0.2)));
+    when(teamRepository.findAll()).thenReturn(List.of(team(1L, "Platform", 0.12, 0.08)));
 
     List<TeamDto> result = teamService.findAll();
 
-    assertThat(result).containsExactly(new TeamDto(1L, "Platform", 0.2));
+    assertThat(result).containsExactly(new TeamDto(1L, "Platform", 0.12, 0.08));
   }
 
   @Test
@@ -74,25 +74,39 @@ class TeamServiceTest {
               return saved;
             });
 
-    TeamDto result = teamService.create(new TeamDto(null, "Data", 0.25));
+    TeamDto result = teamService.create(new TeamDto(null, "Data", 0.15, 0.10));
 
-    assertThat(result).isEqualTo(new TeamDto(42L, "Data", 0.25));
+    assertThat(result).isEqualTo(new TeamDto(42L, "Data", 0.15, 0.10));
+  }
+
+  @Test
+  void createRejectsOverheadsThatSumAboveOne() {
+    assertThatThrownBy(() -> teamService.create(new TeamDto(null, "Data", 0.6, 0.5)))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(teamRepository, never()).save(any());
   }
 
   @Test
   void updateOverwritesExistingTeamFields() {
-    Team existing = team(1L, "Old Name", 0.1);
+    Team existing = team(1L, "Old Name", 0.1, 0.05);
     when(teamRepository.findById(1L)).thenReturn(Optional.of(existing));
     when(teamRepository.save(any(Team.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    TeamDto result = teamService.update(1L, new TeamDto(1L, "New Name", 0.3));
+    TeamDto result = teamService.update(1L, new TeamDto(1L, "New Name", 0.2, 0.1));
 
-    assertThat(result).isEqualTo(new TeamDto(1L, "New Name", 0.3));
+    assertThat(result).isEqualTo(new TeamDto(1L, "New Name", 0.2, 0.1));
+  }
+
+  @Test
+  void updateRejectsOverheadsThatSumAboveOne() {
+    assertThatThrownBy(() -> teamService.update(1L, new TeamDto(1L, "Old Name", 0.7, 0.4)))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(teamRepository, never()).save(any());
   }
 
   @Test
   void deleteRemovesAnExistingTeam() {
-    Team existing = team(1L, "Platform", 0.2);
+    Team existing = team(1L, "Platform", 0.12, 0.08);
     when(teamRepository.findById(1L)).thenReturn(Optional.of(existing));
 
     teamService.delete(1L);
@@ -118,7 +132,7 @@ class TeamServiceTest {
 
   @Test
   void findPeopleReturnsRosterForExistingTeam() {
-    Team platform = team(1L, "Platform", 0.2);
+    Team platform = team(1L, "Platform", 0.12, 0.08);
     when(teamRepository.findById(1L)).thenReturn(Optional.of(platform));
     when(personRepository.findByTeamId(1L))
         .thenReturn(List.of(personOf(10L, platform, "Alice")));
@@ -130,7 +144,7 @@ class TeamServiceTest {
 
   @Test
   void addPersonAttachesTheNewPersonToTheTeam() {
-    Team platform = team(1L, "Platform", 0.2);
+    Team platform = team(1L, "Platform", 0.12, 0.08);
     when(teamRepository.findById(1L)).thenReturn(Optional.of(platform));
     when(personRepository.save(any(Person.class)))
         .thenAnswer(
@@ -147,8 +161,8 @@ class TeamServiceTest {
 
   @Test
   void updatePersonThrowsWhenPersonBelongsToAnotherTeam() {
-    Team platform = team(1L, "Platform", 0.2);
-    Team mobile = team(2L, "Mobile", 0.15);
+    Team platform = team(1L, "Platform", 0.12, 0.08);
+    Team mobile = team(2L, "Mobile", 0.10, 0.05);
     Person personOnMobile = personOf(10L, mobile, "Carol");
 
     when(teamRepository.findById(1L)).thenReturn(Optional.of(platform));
@@ -161,7 +175,7 @@ class TeamServiceTest {
 
   @Test
   void deletePersonRemovesAMatchingPerson() {
-    Team platform = team(1L, "Platform", 0.2);
+    Team platform = team(1L, "Platform", 0.12, 0.08);
     Person person = personOf(10L, platform, "Alice");
 
     when(teamRepository.findById(1L)).thenReturn(Optional.of(platform));

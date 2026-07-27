@@ -37,7 +37,7 @@ class CapacityServiceTest {
   @org.junit.jupiter.api.BeforeEach
   void setUp() {
     capacityService = new CapacityService(teamRepository, personRepository, epicRepository);
-    team = new Team("Platform", 0.20);
+    team = new Team("Platform", 0.12, 0.08);
     team.setId(1L);
   }
 
@@ -144,7 +144,7 @@ class CapacityServiceTest {
 
   @Test
   void overviewAggregatesNetAndAllocatedCapacityAcrossTeams() {
-    Team mobile = new Team("Mobile", 0.0);
+    Team mobile = new Team("Mobile", 0.0, 0.0);
     mobile.setId(2L);
 
     when(teamRepository.findAll()).thenReturn(List.of(team, mobile));

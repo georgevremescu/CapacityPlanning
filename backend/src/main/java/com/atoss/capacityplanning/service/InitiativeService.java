@@ -45,7 +45,10 @@ public class InitiativeService {
       teamsById.putIfAbsent(
           epic.getTeam().getId(),
           new TeamDto(
-              epic.getTeam().getId(), epic.getTeam().getName(), epic.getTeam().getOverheadPercentage()));
+              epic.getTeam().getId(),
+              epic.getTeam().getName(),
+              epic.getTeam().getMeetingOverheadPercentage(),
+              epic.getTeam().getSupportLoadOverheadPercentage()));
     }
     List<TeamDto> teamsInvolved =
         teamsById.values().stream().sorted(Comparator.comparing(TeamDto::name)).toList();

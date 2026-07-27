@@ -38,7 +38,7 @@ class EpicServiceTest {
   }
 
   private static Team team(long id, String name) {
-    Team team = new Team(name, 0.2);
+    Team team = new Team(name, 0.2, 0.0);
     team.setId(id);
     return team;
   }
