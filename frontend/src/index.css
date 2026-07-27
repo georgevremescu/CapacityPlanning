@@ -288,8 +288,12 @@ label {
   letter-spacing: 0.04em;
 }
 
+/* Applied to an inner wrapper, not the <td> itself: display:flex directly on a
+   table cell stops it stretching to the row's height, so multi-line sibling cells
+   (e.g. a wrapped name) push the buttons out of vertical center. */
 .table-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 

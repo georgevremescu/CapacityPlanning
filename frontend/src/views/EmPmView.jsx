@@ -246,13 +246,15 @@ export default function EmPmView({ quarter, mode }) {
                   </td>
                   <td>{initiative.estimatedStoryPoints}</td>
                   <td>{initiative.targetDate ?? '-'}</td>
-                  <td className="table-actions">
-                    <button className="button-secondary" onClick={() => setEditingId(initiative.id)}>
-                      Edit
-                    </button>
-                    <button className="button-danger" onClick={() => handleDelete(initiative.id)}>
-                      Delete
-                    </button>
+                  <td>
+                    <span className="table-actions">
+                      <button className="button-secondary" onClick={() => setEditingId(initiative.id)}>
+                        Edit
+                      </button>
+                      <button className="button-danger" onClick={() => handleDelete(initiative.id)}>
+                        Delete
+                      </button>
+                    </span>
                   </td>
                 </tr>
               ),

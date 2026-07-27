@@ -300,16 +300,18 @@ export default function TeamLeadView({ quarter, mode }) {
                     <td>{person.velocity}</td>
                     <td>{(person.meetingOverheadPercentage * 100).toFixed(0)}%</td>
                     <td>{(person.supportLoadOverheadPercentage * 100).toFixed(0)}%</td>
-                    <td className="table-actions">
-                      <button
-                        className="button-secondary"
-                        onClick={() => setEditingPersonId(person.id)}
-                      >
-                        Edit
-                      </button>
-                      <button className="button-danger" onClick={() => handleDeletePerson(person.id)}>
-                        Delete
-                      </button>
+                    <td>
+                      <span className="table-actions">
+                        <button
+                          className="button-secondary"
+                          onClick={() => setEditingPersonId(person.id)}
+                        >
+                          Edit
+                        </button>
+                        <button className="button-danger" onClick={() => handleDeletePerson(person.id)}>
+                          Delete
+                        </button>
+                      </span>
                     </td>
                   </tr>
                 ),
@@ -381,13 +383,15 @@ export default function TeamLeadView({ quarter, mode }) {
                         {epic.status}
                       </span>
                     </td>
-                    <td className="table-actions">
-                      <button className="button-secondary" onClick={() => setEditingEpicId(epic.id)}>
-                        Edit
-                      </button>
-                      <button className="button-danger" onClick={() => handleDeleteEpic(epic.id)}>
-                        Delete
-                      </button>
+                    <td>
+                      <span className="table-actions">
+                        <button className="button-secondary" onClick={() => setEditingEpicId(epic.id)}>
+                          Edit
+                        </button>
+                        <button className="button-danger" onClick={() => handleDeleteEpic(epic.id)}>
+                          Delete
+                        </button>
+                      </span>
                     </td>
                   </tr>
                 ),
