@@ -11,7 +11,9 @@ import com.atoss.capacityplanning.repository.InitiativeRepository;
 import com.atoss.capacityplanning.repository.PersonRepository;
 import com.atoss.capacityplanning.repository.TeamRepository;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -103,10 +105,24 @@ public class DataSeeder implements CommandLineRunner {
     nextNameIndex = seedGeneratedEngineers(platform, PLATFORM_TARGET_SIZE - 3, nextNameIndex);
     nextNameIndex = seedGeneratedEngineers(mobile, MOBILE_TARGET_SIZE - 2, nextNameIndex);
     nextNameIndex = seedGeneratedEngineers(data, DATA_TARGET_SIZE - 3, nextNameIndex);
+    Map<String, Team> additionalTeams = new LinkedHashMap<>();
     for (TeamSpec spec : ADDITIONAL_TEAM_SPECS) {
       Team team = teamRepository.save(new Team(spec.name()));
       nextNameIndex = seedGeneratedEngineers(team, spec.size(), nextNameIndex);
+      additionalTeams.put(spec.name(), team);
     }
+    Team payments = additionalTeams.get("Payments");
+    Team growth = additionalTeams.get("Growth");
+    Team search = additionalTeams.get("Search");
+    Team infrastructure = additionalTeams.get("Infrastructure");
+    Team security = additionalTeams.get("Security");
+    Team identity = additionalTeams.get("Identity");
+    Team analytics = additionalTeams.get("Analytics");
+    Team machineLearning = additionalTeams.get("Machine Learning");
+    Team designSystems = additionalTeams.get("Design Systems");
+    Team developerExperience = additionalTeams.get("Developer Experience");
+    Team checkout = additionalTeams.get("Checkout");
+    Team notifications = additionalTeams.get("Notifications");
 
     Initiative checkoutRedesign =
         initiativeRepository.save(
@@ -148,6 +164,86 @@ public class DataSeeder implements CommandLineRunner {
                 InitiativeStatus.PROPOSED,
                 3));
 
+    Initiative searchRelevanceOverhaul =
+        initiativeRepository.save(
+            initiative(
+                "Search Relevance Overhaul",
+                "Improve query understanding and ranking quality.",
+                70,
+                LocalDate.of(2026, 10, 31),
+                InitiativeStatus.COMMITTED,
+                2));
+
+    Initiative zeroTrustAccessRollout =
+        initiativeRepository.save(
+            initiative(
+                "Zero Trust Access Rollout",
+                "Move internal access control to per-request verification.",
+                90,
+                LocalDate.of(2026, 11, 15),
+                InitiativeStatus.COMMITTED,
+                1));
+
+    Initiative mlPlatformFoundations =
+        initiativeRepository.save(
+            initiative(
+                "ML Platform Foundations",
+                "Shared feature store and model registry for ML workloads.",
+                100,
+                LocalDate.of(2027, 1, 15),
+                InitiativeStatus.PROPOSED,
+                2));
+
+    Initiative designSystem2 =
+        initiativeRepository.save(
+            initiative(
+                "Design System 2.0",
+                "Rebuild the shared component library and its tooling.",
+                50,
+                LocalDate.of(2026, 10, 15),
+                InitiativeStatus.COMMITTED,
+                3));
+
+    Initiative notificationReliability =
+        initiativeRepository.save(
+            initiative(
+                "Notification Reliability",
+                "Reduce dropped/delayed notifications across providers.",
+                40,
+                LocalDate.of(2026, 9, 20),
+                InitiativeStatus.COMMITTED,
+                1));
+
+    Initiative paymentsExpansion =
+        initiativeRepository.save(
+            initiative(
+                "Payments Expansion",
+                "Support additional currencies and a faster checkout path.",
+                90,
+                LocalDate.of(2027, 1, 10),
+                InitiativeStatus.PROPOSED,
+                2));
+
+    Initiative growthExperimentsPlatform =
+        initiativeRepository.save(
+            initiative(
+                "Growth Experiments Platform",
+                "Self-serve A/B testing for the growth team.",
+                45,
+                LocalDate.of(2027, 1, 20),
+                InitiativeStatus.PROPOSED,
+                3));
+
+    Initiative infraModernization =
+        initiativeRepository.save(
+            initiative(
+                "Infra Modernization",
+                "Migrate remaining workloads off the legacy cluster.",
+                60,
+                LocalDate.of(2026, 10, 31),
+                InitiativeStatus.COMMITTED,
+                1));
+
     epicRepository.save(
         epic("Payment API revamp", checkoutRedesign, platform, 30, LocalDate.of(2026, 8, 15), EpicStatus.COMMITTED));
     epicRepository.save(
@@ -175,6 +271,72 @@ public class DataSeeder implements CommandLineRunner {
         epic("Points ledger", loyaltyProgram, data, 30, LocalDate.of(2027, 1, 15), EpicStatus.PROPOSED));
     epicRepository.save(
         epic("Loyalty UI", loyaltyProgram, mobile, 20, LocalDate.of(2027, 1, 20), EpicStatus.PROPOSED));
+
+    epicRepository.save(
+        epic("Query understanding revamp", searchRelevanceOverhaul, search, 25, LocalDate.of(2026, 9, 10), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Ranking model v2", searchRelevanceOverhaul, search, 30, LocalDate.of(2026, 10, 25), EpicStatus.IN_PROGRESS));
+    epicRepository.save(
+        epic("Personalized results", searchRelevanceOverhaul, search, 20, LocalDate.of(2026, 12, 20), EpicStatus.PROPOSED));
+
+    epicRepository.save(
+        epic("SSO enforcement", zeroTrustAccessRollout, security, 30, LocalDate.of(2026, 9, 15), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Device posture checks", zeroTrustAccessRollout, security, 25, LocalDate.of(2026, 11, 10), EpicStatus.IN_PROGRESS));
+    epicRepository.save(
+        epic("Credential rotation automation", zeroTrustAccessRollout, identity, 15, LocalDate.of(2026, 8, 20), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Just-in-time access", zeroTrustAccessRollout, identity, 20, LocalDate.of(2026, 9, 25), EpicStatus.PROPOSED));
+    epicRepository.save(
+        epic("Security incident response automation", zeroTrustAccessRollout, security, 20, LocalDate.of(2026, 12, 15), EpicStatus.PROPOSED));
+
+    epicRepository.save(
+        epic("Model registry", mlPlatformFoundations, machineLearning, 25, LocalDate.of(2026, 9, 30), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Feature store MVP", mlPlatformFoundations, machineLearning, 35, LocalDate.of(2026, 11, 30), EpicStatus.PROPOSED));
+    epicRepository.save(
+        epic("Analytics event pipeline hardening", mlPlatformFoundations, analytics, 20, LocalDate.of(2026, 9, 8), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Experiment tracking dashboards", mlPlatformFoundations, analytics, 20, LocalDate.of(2026, 12, 5), EpicStatus.PROPOSED));
+
+    epicRepository.save(
+        epic("Token pipeline rewrite", designSystem2, designSystems, 20, LocalDate.of(2026, 9, 5), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Component accessibility audit", designSystem2, designSystems, 15, LocalDate.of(2026, 10, 10), EpicStatus.IN_PROGRESS));
+    epicRepository.save(
+        epic("Theming API v2", designSystem2, designSystems, 15, LocalDate.of(2026, 12, 10), EpicStatus.PROPOSED));
+    epicRepository.save(
+        epic("CLI scaffolding tool", designSystem2, developerExperience, 15, LocalDate.of(2026, 9, 25), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Docs site relaunch", designSystem2, developerExperience, 15, LocalDate.of(2026, 11, 15), EpicStatus.PROPOSED));
+
+    epicRepository.save(
+        epic("Delivery retry pipeline", notificationReliability, notifications, 20, LocalDate.of(2026, 9, 18), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Push provider failover", notificationReliability, notifications, 20, LocalDate.of(2026, 10, 30), EpicStatus.IN_PROGRESS));
+    epicRepository.save(
+        epic("In-app notification center", notificationReliability, notifications, 25, LocalDate.of(2026, 12, 12), EpicStatus.PROPOSED));
+
+    epicRepository.save(
+        epic("Refund automation", paymentsExpansion, payments, 20, LocalDate.of(2026, 9, 22), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Multi-currency support", paymentsExpansion, payments, 30, LocalDate.of(2026, 12, 1), EpicStatus.PROPOSED));
+    epicRepository.save(
+        epic("Express checkout button", paymentsExpansion, checkout, 25, LocalDate.of(2026, 11, 25), EpicStatus.IN_PROGRESS));
+    epicRepository.save(
+        epic("Saved payment methods", paymentsExpansion, checkout, 20, LocalDate.of(2026, 12, 18), EpicStatus.PROPOSED));
+
+    epicRepository.save(
+        epic("Referral program v1", growthExperimentsPlatform, growth, 20, LocalDate.of(2026, 9, 28), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("A/B testing framework", growthExperimentsPlatform, growth, 25, LocalDate.of(2026, 11, 15), EpicStatus.PROPOSED));
+
+    epicRepository.save(
+        epic("CI pipeline speedups", infraModernization, infrastructure, 25, LocalDate.of(2026, 9, 12), EpicStatus.COMMITTED));
+    epicRepository.save(
+        epic("Kubernetes migration", infraModernization, infrastructure, 35, LocalDate.of(2026, 10, 20), EpicStatus.IN_PROGRESS));
+    epicRepository.save(
+        epic("Multi-region failover", infraModernization, infrastructure, 30, LocalDate.of(2026, 12, 22), EpicStatus.PROPOSED));
 
     epicRepository.save(
         epic("Tech debt cleanup", null, platform, 15, LocalDate.of(2026, 8, 30), EpicStatus.COMMITTED));
