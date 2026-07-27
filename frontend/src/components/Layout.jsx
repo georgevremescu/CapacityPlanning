@@ -42,8 +42,7 @@ export default function Layout({ activeTab, onChangeTab, quarter, onChangeQuarte
               </select>
             </label>
             {showModeToggle ? (
-              <label className="control control--toggle">
-                <span>Simulation</span>
+              <label className="control control--toggle">                
                 <input
                   type="checkbox"
                   checked={mode === CAPACITY_MODE.SIMULATED}
@@ -56,7 +55,7 @@ export default function Layout({ activeTab, onChangeTab, quarter, onChangeQuarte
                 </span>
               </label>
             ) : (
-              <span className="control-hint">Showing committed vs. simulated side by side</span>
+              <span className="control-hint">Showing committed vs. proposed side by side</span>
             )}
           </div>
         </div>

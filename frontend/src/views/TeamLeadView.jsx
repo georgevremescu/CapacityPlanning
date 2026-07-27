@@ -223,7 +223,14 @@ export default function TeamLeadView({ quarter, mode }) {
       {actionError && <p className="state-message state-message--error">{actionError}</p>}
 
       <div className="card">
-        <h3>{team?.name}</h3>
+        <h3>
+          {team?.name}
+          {people && (
+            <span className="control-hint" style={{ marginLeft: 8 }}>
+              &middot; {people.length} {people.length === 1 ? 'member' : 'members'}
+            </span>
+          )}
+        </h3>
         {capacityLoading || !capacity ? (
           <p className="state-message">Loading capacity...</p>
         ) : (
