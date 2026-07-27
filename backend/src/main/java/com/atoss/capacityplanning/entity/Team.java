@@ -20,23 +20,9 @@ public class Team {
   @Column(nullable = false)
   private String name;
 
-  // e.g. 0.1 = 10% of capacity lost to recurring meetings/admin.
-  @Column(nullable = false)
-  private double meetingOverheadPercentage;
-
-  // e.g. 0.1 = 10% of capacity lost to ad-hoc support/interrupt work.
-  @Column(nullable = false)
-  private double supportLoadOverheadPercentage;
-
   public Team() {}
 
-  public Team(String name, double meetingOverheadPercentage, double supportLoadOverheadPercentage) {
+  public Team(String name) {
     this.name = name;
-    this.meetingOverheadPercentage = meetingOverheadPercentage;
-    this.supportLoadOverheadPercentage = supportLoadOverheadPercentage;
-  }
-
-  public double getTotalOverheadPercentage() {
-    return meetingOverheadPercentage + supportLoadOverheadPercentage;
   }
 }

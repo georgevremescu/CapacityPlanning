@@ -43,12 +43,7 @@ public class InitiativeService {
     Map<Long, TeamDto> teamsById = new LinkedHashMap<>();
     for (Epic epic : epics) {
       teamsById.putIfAbsent(
-          epic.getTeam().getId(),
-          new TeamDto(
-              epic.getTeam().getId(),
-              epic.getTeam().getName(),
-              epic.getTeam().getMeetingOverheadPercentage(),
-              epic.getTeam().getSupportLoadOverheadPercentage()));
+          epic.getTeam().getId(), new TeamDto(epic.getTeam().getId(), epic.getTeam().getName()));
     }
     List<TeamDto> teamsInvolved =
         teamsById.values().stream().sorted(Comparator.comparing(TeamDto::name)).toList();

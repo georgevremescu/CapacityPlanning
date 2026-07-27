@@ -51,7 +51,7 @@ class InitiativeServiceTest {
   }
 
   private static Team team(long id, String name) {
-    Team team = new Team(name, 0.2, 0.0);
+    Team team = new Team(name);
     team.setId(id);
     return team;
   }

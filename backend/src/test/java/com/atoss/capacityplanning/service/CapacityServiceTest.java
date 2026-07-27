@@ -37,12 +37,22 @@ class CapacityServiceTest {
   @org.junit.jupiter.api.BeforeEach
   void setUp() {
     capacityService = new CapacityService(teamRepository, personRepository, epicRepository);
-    team = new Team("Platform", 0.12, 0.08);
+    team = new Team("Platform");
     team.setId(1L);
   }
 
+  // Overhead defaults to 0 so tests that aren't exercising overhead can ignore it.
   private static Person person(Team team, double availabilityFte, double velocity) {
-    return new Person("Person", team, availabilityFte, velocity);
+    return person(team, availabilityFte, velocity, 0.0, 0.0);
+  }
+
+  private static Person person(
+      Team team,
+      double availabilityFte,
+      double velocity,
+      double meetingOverhead,
+      double supportLoadOverhead) {
+    return new Person("Person", team, availabilityFte, velocity, meetingOverhead, supportLoadOverhead);
   }
 
   private static Epic epic(Team team, int storyPoints, LocalDate dueDate, EpicStatus status) {
@@ -56,20 +66,23 @@ class CapacityServiceTest {
   }
 
   @Test
-  void computesRawAndNetCapacityFromRoster() {
+  void computesRawAndNetCapacityPerPersonThenSums() {
     when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
     when(personRepository.findByTeamId(1L))
         .thenReturn(
             List.of(
-                person(team, 1.0, 6.0), // 1.0 * 6.0 * 62 = 372
-                person(team, 0.8, 5.0))); // 0.8 * 5.0 * 62 = 248
+                // 1.0 * 6.0 * 62 = 372 raw, 15% overhead -> 316.2 net
+                person(team, 1.0, 6.0, 0.10, 0.05),
+                // 0.8 * 5.0 * 62 = 248 raw, 25% overhead -> 186.0 net
+                person(team, 0.8, 5.0, 0.15, 0.10)));
     when(epicRepository.findByTeamId(1L)).thenReturn(List.of());
 
     TeamCapacityDto result = capacityService.forTeam(1L, "2026-Q3", CapacityMode.COMMITTED);
 
     assertThat(result.rawCapacitySp()).isCloseTo(620.0, within(0.001));
-    // net = raw * (1 - 0.20)
-    assertThat(result.netCapacitySp()).isCloseTo(496.0, within(0.001));
+    // net is summed from each person's own after-overhead contribution, not a single
+    // team-wide discount, so it differs from raw * (1 - blended overhead).
+    assertThat(result.netCapacitySp()).isCloseTo(502.2, within(0.001));
     assertThat(result.workingDaysInQuarter()).isEqualTo(62);
   }
 
@@ -144,12 +157,14 @@ class CapacityServiceTest {
 
   @Test
   void overviewAggregatesNetAndAllocatedCapacityAcrossTeams() {
-    Team mobile = new Team("Mobile", 0.0, 0.0);
+    Team mobile = new Team("Mobile");
     mobile.setId(2L);
 
     when(teamRepository.findAll()).thenReturn(List.of(team, mobile));
 
-    when(personRepository.findByTeamId(1L)).thenReturn(List.of(person(team, 1.0, 10.0)));
+    // 20% overhead on Platform's person, none on Mobile's.
+    when(personRepository.findByTeamId(1L))
+        .thenReturn(List.of(person(team, 1.0, 10.0, 0.12, 0.08)));
     when(epicRepository.findByTeamId(1L))
         .thenReturn(List.of(epic(team, 100, LocalDate.of(2026, 8, 1), EpicStatus.COMMITTED)));
 

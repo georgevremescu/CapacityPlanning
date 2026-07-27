@@ -39,12 +39,32 @@ public class Person {
   @Column(nullable = false)
   private double velocity;
 
+  // e.g. 0.1 = 10% of this person's time lost to recurring meetings/admin.
+  @Column(nullable = false)
+  private double meetingOverheadPercentage;
+
+  // e.g. 0.1 = 10% of this person's time lost to ad-hoc support/interrupt work.
+  @Column(nullable = false)
+  private double supportLoadOverheadPercentage;
+
   public Person() {}
 
-  public Person(String name, Team team, double availabilityFte, double velocity) {
+  public Person(
+      String name,
+      Team team,
+      double availabilityFte,
+      double velocity,
+      double meetingOverheadPercentage,
+      double supportLoadOverheadPercentage) {
     this.name = name;
     this.team = team;
     this.availabilityFte = availabilityFte;
     this.velocity = velocity;
+    this.meetingOverheadPercentage = meetingOverheadPercentage;
+    this.supportLoadOverheadPercentage = supportLoadOverheadPercentage;
+  }
+
+  public double getTotalOverheadPercentage() {
+    return meetingOverheadPercentage + supportLoadOverheadPercentage;
   }
 }

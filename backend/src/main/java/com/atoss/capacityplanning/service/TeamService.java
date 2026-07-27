@@ -31,26 +31,14 @@ public class TeamService {
   }
 
   public TeamDto create(TeamDto request) {
-    validateOverhead(request);
-    Team team =
-        new Team(request.name(), request.meetingOverheadPercentage(), request.supportLoadOverheadPercentage());
+    Team team = new Team(request.name());
     return toDto(teamRepository.save(team));
   }
 
   public TeamDto update(Long id, TeamDto request) {
-    validateOverhead(request);
     Team team = getTeamOrThrow(id);
     team.setName(request.name());
-    team.setMeetingOverheadPercentage(request.meetingOverheadPercentage());
-    team.setSupportLoadOverheadPercentage(request.supportLoadOverheadPercentage());
     return toDto(teamRepository.save(team));
-  }
-
-  private void validateOverhead(TeamDto request) {
-    if (request.totalOverheadPercentage() > 1.0) {
-      throw new IllegalArgumentException(
-          "meetingOverheadPercentage + supportLoadOverheadPercentage must not exceed 1.0");
-    }
   }
 
   public void delete(Long id) {
@@ -65,18 +53,35 @@ public class TeamService {
 
   public PersonDto addPerson(Long teamId, PersonDto request) {
     Team team = getTeamOrThrow(teamId);
+    validateOverhead(request);
     Person person =
-        new Person(request.name(), team, request.availabilityFte(), request.velocity());
+        new Person(
+            request.name(),
+            team,
+            request.availabilityFte(),
+            request.velocity(),
+            request.meetingOverheadPercentage(),
+            request.supportLoadOverheadPercentage());
     return toDto(personRepository.save(person));
   }
 
   public PersonDto updatePerson(Long teamId, Long personId, PersonDto request) {
     getTeamOrThrow(teamId);
+    validateOverhead(request);
     Person person = getPersonOrThrow(teamId, personId);
     person.setName(request.name());
     person.setAvailabilityFte(request.availabilityFte());
     person.setVelocity(request.velocity());
+    person.setMeetingOverheadPercentage(request.meetingOverheadPercentage());
+    person.setSupportLoadOverheadPercentage(request.supportLoadOverheadPercentage());
     return toDto(personRepository.save(person));
+  }
+
+  private void validateOverhead(PersonDto request) {
+    if (request.totalOverheadPercentage() > 1.0) {
+      throw new IllegalArgumentException(
+          "meetingOverheadPercentage + supportLoadOverheadPercentage must not exceed 1.0");
+    }
   }
 
   public void deletePerson(Long teamId, Long personId) {
@@ -104,11 +109,7 @@ public class TeamService {
   }
 
   static TeamDto toDto(Team team) {
-    return new TeamDto(
-        team.getId(),
-        team.getName(),
-        team.getMeetingOverheadPercentage(),
-        team.getSupportLoadOverheadPercentage());
+    return new TeamDto(team.getId(), team.getName());
   }
 
   static PersonDto toDto(Person person) {
@@ -117,6 +118,8 @@ public class TeamService {
         person.getName(),
         person.getTeam().getId(),
         person.getAvailabilityFte(),
-        person.getVelocity());
+        person.getVelocity(),
+        person.getMeetingOverheadPercentage(),
+        person.getSupportLoadOverheadPercentage());
   }
 }

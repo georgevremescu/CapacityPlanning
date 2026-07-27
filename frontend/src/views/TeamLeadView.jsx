@@ -6,7 +6,13 @@ import UtilizationBar from '../components/UtilizationBar.jsx';
 import CrudForm from '../components/CrudForm.jsx';
 import { EPIC_STATUS, EPIC_STATUSES } from '../constants.js';
 
-const EMPTY_PERSON_FORM = { name: '', availabilityFte: 1.0, velocity: 5.0 };
+const EMPTY_PERSON_FORM = {
+  name: '',
+  availabilityFte: 1.0,
+  velocity: 5.0,
+  meetingOverheadPercentage: 0.1,
+  supportLoadOverheadPercentage: 0.05,
+};
 
 const PERSON_FIELDS = [
   { name: 'name', label: 'Name', type: 'text', required: true },
@@ -20,72 +26,25 @@ const PERSON_FIELDS = [
     required: true,
   },
   { name: 'velocity', label: 'Velocity (sp/day)', type: 'number', min: 0, step: 0.5, required: true },
+  {
+    name: 'meetingOverheadPercentage',
+    label: 'Meeting Overhead',
+    type: 'number',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    required: true,
+  },
+  {
+    name: 'supportLoadOverheadPercentage',
+    label: 'Support Load Overhead',
+    type: 'number',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    required: true,
+  },
 ];
-
-function OverheadEditor({ team, onSave }) {
-  const [editing, setEditing] = useState(false);
-  const [meetingValue, setMeetingValue] = useState(team.meetingOverheadPercentage);
-  const [supportLoadValue, setSupportLoadValue] = useState(team.supportLoadOverheadPercentage);
-
-  const total = team.meetingOverheadPercentage + team.supportLoadOverheadPercentage;
-
-  if (!editing) {
-    return (
-      <span>
-        {(total * 100).toFixed(0)}% ({(team.meetingOverheadPercentage * 100).toFixed(0)}% meetings +{' '}
-        {(team.supportLoadOverheadPercentage * 100).toFixed(0)}% support){' '}
-        <button
-          className="link-button"
-          onClick={() => {
-            setMeetingValue(team.meetingOverheadPercentage);
-            setSupportLoadValue(team.supportLoadOverheadPercentage);
-            setEditing(true);
-          }}
-        >
-          edit
-        </button>
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-edit">
-      <label>
-        Meetings{' '}
-        <input
-          type="number"
-          min="0"
-          max="1"
-          step="0.01"
-          value={meetingValue}
-          onChange={(e) => setMeetingValue(e.target.value)}
-        />
-      </label>
-      <label>
-        Support load{' '}
-        <input
-          type="number"
-          min="0"
-          max="1"
-          step="0.01"
-          value={supportLoadValue}
-          onChange={(e) => setSupportLoadValue(e.target.value)}
-        />
-      </label>
-      <button
-        onClick={async () => {
-          await onSave(Number(meetingValue), Number(supportLoadValue));
-          setEditing(false);
-        }}
-      >
-        Save
-      </button>
-      <button className="button-secondary" onClick={() => setEditing(false)}>
-        Cancel
-      </button>
-    </span>
-  );
-}
 
 const EMPTY_EPIC_FORM = {
   name: '',
@@ -128,10 +87,7 @@ function byDueDate(a, b) {
 }
 
 export default function TeamLeadView({ quarter, mode }) {
-  const { data: teams, loading: teamsLoading, reload: reloadTeams } = useAsync(
-    () => teamsApi.list(),
-    [],
-  );
+  const { data: teams, loading: teamsLoading } = useAsync(() => teamsApi.list(), []);
   const [teamId, setTeamId] = useState(null);
 
   useEffect(() => {
@@ -172,21 +128,6 @@ export default function TeamLeadView({ quarter, mode }) {
 
   const team = teams?.find((t) => t.id === teamId);
   const teamEpics = (allEpics?.filter((e) => e.teamId === teamId) ?? []).sort(byDueDate);
-
-  const handleOverheadSave = async (meetingOverheadPercentage, supportLoadOverheadPercentage) => {
-    try {
-      await teamsApi.update(teamId, {
-        ...team,
-        meetingOverheadPercentage,
-        supportLoadOverheadPercentage,
-      });
-      setActionError(null);
-      reloadTeams();
-      reloadCapacity();
-    } catch (err) {
-      setActionError(err.message);
-    }
-  };
 
   const handleAddPerson = async (payload) => {
     try {
@@ -282,9 +223,7 @@ export default function TeamLeadView({ quarter, mode }) {
       {actionError && <p className="state-message state-message--error">{actionError}</p>}
 
       <div className="card">
-        <h3>
-          {team?.name} &middot; Overhead: {team && <OverheadEditor team={team} onSave={handleOverheadSave} />}
-        </h3>
+        <h3>{team?.name}</h3>
         {capacityLoading || !capacity ? (
           <p className="state-message">Loading capacity...</p>
         ) : (
@@ -296,8 +235,8 @@ export default function TeamLeadView({ quarter, mode }) {
             />
             <p className="metric-line">
               Raw capacity: {capacity.rawCapacitySp.toFixed(1)} sp &middot; Net capacity (after
-              overhead): {capacity.netCapacitySp.toFixed(1)} sp &middot; {capacity.workingDaysInQuarter}{' '}
-              working days assumed &middot; {quarter}
+              each person's own overhead): {capacity.netCapacitySp.toFixed(1)} sp &middot;{' '}
+              {capacity.workingDaysInQuarter} working days assumed &middot; {quarter}
             </p>
           </>
         )}
@@ -328,6 +267,8 @@ export default function TeamLeadView({ quarter, mode }) {
                 <th>Name</th>
                 <th>Availability (FTE)</th>
                 <th>Velocity (sp/day)</th>
+                <th>Meeting Overhead</th>
+                <th>Support Load Overhead</th>
                 <th></th>
               </tr>
             </thead>
@@ -335,7 +276,7 @@ export default function TeamLeadView({ quarter, mode }) {
               {people.map((person) =>
                 editingPersonId === person.id ? (
                   <tr key={person.id}>
-                    <td colSpan={4}>
+                    <td colSpan={6}>
                       <CrudForm
                         inline
                         fields={PERSON_FIELDS}
@@ -350,6 +291,8 @@ export default function TeamLeadView({ quarter, mode }) {
                     <td>{person.name}</td>
                     <td>{(person.availabilityFte * 100).toFixed(0)}%</td>
                     <td>{person.velocity}</td>
+                    <td>{(person.meetingOverheadPercentage * 100).toFixed(0)}%</td>
+                    <td>{(person.supportLoadOverheadPercentage * 100).toFixed(0)}%</td>
                     <td className="table-actions">
                       <button
                         className="button-secondary"

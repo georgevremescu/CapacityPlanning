@@ -67,7 +67,18 @@ public class CapacityService {
         people.stream()
             .mapToDouble(p -> p.getAvailabilityFte() * p.getVelocity() * workingDays)
             .sum();
-    double netCapacitySp = rawCapacitySp * (1 - team.getTotalOverheadPercentage());
+    // Overhead is per-person (meetings/support load vary by individual), so net capacity
+    // is summed from each person's own after-overhead contribution, not a single
+    // team-wide discount applied to the raw total.
+    double netCapacitySp =
+        people.stream()
+            .mapToDouble(
+                p ->
+                    p.getAvailabilityFte()
+                        * p.getVelocity()
+                        * workingDays
+                        * (1 - p.getTotalOverheadPercentage()))
+            .sum();
 
     Set<EpicStatus> includedStatuses = EnumSet.copyOf(COMMITTED_STATUSES);
     if (mode == CapacityMode.SIMULATED) {

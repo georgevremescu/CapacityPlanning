@@ -41,20 +41,23 @@ public class DataSeeder implements CommandLineRunner {
       return;
     }
 
-    Team platform = teamRepository.save(new Team("Platform", 0.12, 0.08));
-    Team mobile = teamRepository.save(new Team("Mobile", 0.10, 0.05));
-    Team data = teamRepository.save(new Team("Data", 0.15, 0.10));
+    Team platform = teamRepository.save(new Team("Platform"));
+    Team mobile = teamRepository.save(new Team("Mobile"));
+    Team data = teamRepository.save(new Team("Data"));
 
-    personRepository.save(new Person("Alice Novak", platform, 1.0, 6.0));
-    personRepository.save(new Person("Bob Fischer", platform, 0.8, 5.0));
-    personRepository.save(new Person("Carol Weiss", platform, 1.0, 4.0));
+    // Overhead varies per person: e.g. Bob and Grace/Heidi carry heavier support-rotation
+    // load than their teammates, so a single team-wide overhead number would understate
+    // some people's real availability and overstate others'.
+    personRepository.save(new Person("Alice Novak", platform, 1.0, 6.0, 0.10, 0.05));
+    personRepository.save(new Person("Bob Fischer", platform, 0.8, 5.0, 0.15, 0.10));
+    personRepository.save(new Person("Carol Weiss", platform, 1.0, 4.0, 0.10, 0.05));
 
-    personRepository.save(new Person("Dave Kruger", mobile, 1.0, 5.0));
-    personRepository.save(new Person("Eve Santos", mobile, 1.0, 5.5));
+    personRepository.save(new Person("Dave Kruger", mobile, 1.0, 5.0, 0.10, 0.05));
+    personRepository.save(new Person("Eve Santos", mobile, 1.0, 5.5, 0.12, 0.08));
 
-    personRepository.save(new Person("Frank Bauer", data, 0.6, 4.0));
-    personRepository.save(new Person("Grace Lindqvist", data, 1.0, 6.0));
-    personRepository.save(new Person("Heidi Moreau", data, 1.0, 5.0));
+    personRepository.save(new Person("Frank Bauer", data, 0.6, 4.0, 0.10, 0.05));
+    personRepository.save(new Person("Grace Lindqvist", data, 1.0, 6.0, 0.15, 0.10));
+    personRepository.save(new Person("Heidi Moreau", data, 1.0, 5.0, 0.15, 0.10));
 
     Initiative checkoutRedesign =
         initiativeRepository.save(
@@ -104,7 +107,11 @@ public class DataSeeder implements CommandLineRunner {
         epic("Fraud checks", checkoutRedesign, platform, 20, LocalDate.of(2026, 9, 25), EpicStatus.IN_PROGRESS));
 
     epicRepository.save(
+        epic("Offline banner & UX states", offlineMode, mobile, 15, LocalDate.of(2026, 10, 20), EpicStatus.COMMITTED));
+    epicRepository.save(
         epic("Local cache layer", offlineMode, mobile, 40, LocalDate.of(2026, 11, 30), EpicStatus.PROPOSED));
+    epicRepository.save(
+        epic("Conflict resolution engine", offlineMode, platform, 25, LocalDate.of(2026, 11, 5), EpicStatus.IN_PROGRESS));
     epicRepository.save(
         epic("Sync engine", offlineMode, platform, 35, LocalDate.of(2026, 12, 10), EpicStatus.PROPOSED));
 
