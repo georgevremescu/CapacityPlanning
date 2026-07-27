@@ -1,18 +1,19 @@
 import { nearbyQuarters } from '../utils/quarter.js';
+import { CAPACITY_MODE, TAB } from '../constants.js';
 
 const TABS = [
   {
-    id: 'higher-management',
+    id: TAB.HIGHER_MANAGEMENT,
     label: 'Capacity Outlook',
     hint: 'Cross-team capacity & business plan impact',
   },
   {
-    id: 'em-pm',
+    id: TAB.EM_PM,
     label: 'Planning Simulation',
     hint: 'Initiative delivery, trade-offs & simulation',
   },
   {
-    id: 'team-lead',
+    id: TAB.TEAM_LEAD,
     label: 'Team Workspace',
     hint: 'Roster, overhead & team-level epics',
   },
@@ -22,7 +23,7 @@ export default function Layout({ activeTab, onChangeTab, quarter, onChangeQuarte
   const quarterOptions = nearbyQuarters();
   // Higher Management always shows committed vs. simulated side by side, so the
   // global toggle (which only ever shows one mode at a time) doesn't apply there.
-  const showModeToggle = activeTab !== 'higher-management';
+  const showModeToggle = activeTab !== TAB.HIGHER_MANAGEMENT;
 
   return (
     <div className="app-shell">
@@ -45,11 +46,13 @@ export default function Layout({ activeTab, onChangeTab, quarter, onChangeQuarte
                 <span>Simulation</span>
                 <input
                   type="checkbox"
-                  checked={mode === 'simulated'}
-                  onChange={(e) => onChangeMode(e.target.checked ? 'simulated' : 'committed')}
+                  checked={mode === CAPACITY_MODE.SIMULATED}
+                  onChange={(e) =>
+                    onChangeMode(e.target.checked ? CAPACITY_MODE.SIMULATED : CAPACITY_MODE.COMMITTED)
+                  }
                 />
                 <span className="control-hint">
-                  {mode === 'simulated' ? 'Including proposed' : 'Committed only'}
+                  {mode === CAPACITY_MODE.SIMULATED ? 'Including proposed' : 'Committed only'}
                 </span>
               </label>
             ) : (

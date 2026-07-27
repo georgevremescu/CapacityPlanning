@@ -3,15 +3,14 @@ import { capacityApi, initiativesApi } from '../api/index.js';
 import { useAsync } from '../utils/useAsync.js';
 import UtilizationBar from '../components/UtilizationBar.jsx';
 import CrudForm from '../components/CrudForm.jsx';
-
-const STATUSES = ['PROPOSED', 'COMMITTED', 'CANCELLED'];
+import { CAPACITY_MODE, INITIATIVE_STATUS, INITIATIVE_STATUSES } from '../constants.js';
 
 const EMPTY_FORM = {
   name: '',
   description: '',
   estimatedStoryPoints: 0,
   targetDate: '',
-  status: 'PROPOSED',
+  status: INITIATIVE_STATUS.PROPOSED,
   priority: '',
 };
 
@@ -31,7 +30,7 @@ const INITIATIVE_FIELDS = [
     name: 'status',
     label: 'Status',
     type: 'select',
-    options: STATUSES.map((s) => ({ value: s, label: s })),
+    options: INITIATIVE_STATUSES.map((s) => ({ value: s, label: s })),
   },
   { name: 'priority', label: 'Priority (for trade-off ranking)', type: 'number', nullable: true },
 ];
@@ -63,7 +62,7 @@ function InitiativeDetail({ initiativeId, quarter, mode, onClose }) {
 
           <h4>Delivery across teams &mdash; {quarter}</h4>
           <p className="view-subtitle">
-            {mode === 'simulated' ? 'Including proposed work' : 'Committed only'} &mdash; capacity
+            {mode === CAPACITY_MODE.SIMULATED ? 'Including proposed work' : 'Committed only'} &mdash; capacity
             each involved team has left after this quarter's other assigned work
           </p>
           {data.teamCapacities.length === 0 ? (
@@ -191,7 +190,7 @@ export default function EmPmView({ quarter, mode }) {
         </button>
       </div>
       <p className="view-subtitle">
-        Ranked by priority for trade-off decisions. Simulation mode ({mode === 'simulated' ? 'including proposed' : 'committed only'}) drives the per-team capacity shown in each initiative's detail.
+        Ranked by priority for trade-off decisions. Simulation mode ({mode === CAPACITY_MODE.SIMULATED ? 'including proposed' : 'committed only'}) drives the per-team capacity shown in each initiative's detail.
       </p>
 
       {actionError && <p className="state-message state-message--error">{actionError}</p>}

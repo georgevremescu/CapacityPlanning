@@ -4,8 +4,7 @@ import { useAsync } from '../utils/useAsync.js';
 import { quarterOfDateString } from '../utils/quarter.js';
 import UtilizationBar from '../components/UtilizationBar.jsx';
 import CrudForm from '../components/CrudForm.jsx';
-
-const EPIC_STATUSES = ['PROPOSED', 'COMMITTED', 'IN_PROGRESS', 'DONE', 'CANCELLED'];
+import { EPIC_STATUS, EPIC_STATUSES } from '../constants.js';
 
 const EMPTY_PERSON_FORM = { name: '', availabilityFte: 1.0, velocity: 5.0 };
 
@@ -88,7 +87,13 @@ function OverheadEditor({ team, onSave }) {
   );
 }
 
-const EMPTY_EPIC_FORM = { name: '', initiativeId: '', storyPoints: 0, dueDate: '', status: 'PROPOSED' };
+const EMPTY_EPIC_FORM = {
+  name: '',
+  initiativeId: '',
+  storyPoints: 0,
+  dueDate: '',
+  status: EPIC_STATUS.PROPOSED,
+};
 
 // initiativeId's options depend on the currently loaded initiatives list, so
 // this is a function rather than a static constant like the other field sets.

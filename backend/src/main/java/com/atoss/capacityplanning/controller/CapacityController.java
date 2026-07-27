@@ -25,23 +25,30 @@ public class CapacityController {
   public TeamCapacityDto forTeam(
       @PathVariable Long teamId,
       @RequestParam String quarter,
-      @RequestParam(defaultValue = "committed") String mode) {
+      @RequestParam(defaultValue = CapacityMode.COMMITTED_PARAM) String mode) {
     return capacityService.forTeam(teamId, quarter, parseMode(mode));
   }
 
   @GetMapping("/overview")
   public CapacityOverviewDto overview(
-      @RequestParam String quarter, @RequestParam(defaultValue = "committed") String mode) {
+      @RequestParam String quarter,
+      @RequestParam(defaultValue = CapacityMode.COMMITTED_PARAM) String mode) {
     return capacityService.overview(quarter, parseMode(mode));
   }
 
   private CapacityMode parseMode(String mode) {
     return switch (mode.toLowerCase(Locale.ROOT)) {
-      case "committed" -> CapacityMode.COMMITTED;
-      case "simulated" -> CapacityMode.SIMULATED;
+      case CapacityMode.COMMITTED_PARAM -> CapacityMode.COMMITTED;
+      case CapacityMode.SIMULATED_PARAM -> CapacityMode.SIMULATED;
       default ->
           throw new IllegalArgumentException(
-              "Invalid mode '" + mode + "', expected 'committed' or 'simulated'");
+              "Invalid mode '"
+                  + mode
+                  + "', expected '"
+                  + CapacityMode.COMMITTED_PARAM
+                  + "' or '"
+                  + CapacityMode.SIMULATED_PARAM
+                  + "'");
     };
   }
 }

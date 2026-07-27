@@ -2,6 +2,7 @@ import { capacityApi } from '../api/index.js';
 import { useAsync } from '../utils/useAsync.js';
 import { quartersFrom } from '../utils/quarter.js';
 import UtilizationBar from '../components/UtilizationBar.jsx';
+import { CAPACITY_MODE } from '../constants.js';
 
 const ANNUAL_OUTLOOK_QUARTERS = 4;
 
@@ -16,11 +17,11 @@ function ImpactBadge({ committedSp, simulatedSp }) {
 export default function HigherManagementView({ quarter }) {
   const { data, error, loading } = useAsync(async () => {
     const [committed, simulated, annual] = await Promise.all([
-      capacityApi.overview(quarter, 'committed'),
-      capacityApi.overview(quarter, 'simulated'),
+      capacityApi.overview(quarter, CAPACITY_MODE.COMMITTED),
+      capacityApi.overview(quarter, CAPACITY_MODE.SIMULATED),
       Promise.all(
         quartersFrom(quarter, ANNUAL_OUTLOOK_QUARTERS).map((q) =>
-          capacityApi.overview(q, 'committed'),
+          capacityApi.overview(q, CAPACITY_MODE.COMMITTED),
         ),
       ),
     ]);
